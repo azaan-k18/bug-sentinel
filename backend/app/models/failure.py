@@ -7,8 +7,15 @@ class Failure(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     run_id = Column(Integer, ForeignKey("runs.id"), nullable=False)
-    website_id = Column(Integer, nullable=True)  # optional denormalized field
+
+    test_name = Column(Text, nullable=False)
+    platform = Column(Text, nullable=False)
+    website = Column(Text, nullable=False)
+
     error_message = Column(Text, nullable=True)
     extracted_message = Column(Text, nullable=True)
 
+    website_id = Column(Integer, nullable=True)
+
     run = relationship("Run", back_populates="failures")
+    labels = relationship("Label", back_populates="failure", cascade="all, delete-orphan")

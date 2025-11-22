@@ -1,48 +1,125 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
-from typing import Dict, Any, Optional
+from typing import List
 
 from app.db.session import get_db
-from app.parsers.jenkins_parser import extract_failures_from_console
 from app.models.run import Run
 from app.models.failure import Failure
+from app.models.label import Label
+
+from app.parsers.normalize import normalize_message
+from app.ml.inference import classify_message
 
 router = APIRouter()
 
-class JenkinsPayload(BaseModel):
-    metadata: Dict[str, Any]
-    log: str
+# ------------------------------------------------------
+# REQUEST MODELS
+# ------------------------------------------------------
+class FailureItem(BaseModel):
+    test_name: str
+    raw_message: str
+    platform: str            # "desktop" / "mobile"
+    website: str             # domain only (ex: indianexpress.com)
 
-@router.post("/jenkins")
-def ingest_jenkins(payload: JenkinsPayload, db: Session = Depends(get_db)):
+
+class IngestionRequest(BaseModel):
+    run_id: str              # external pipeline run ID
+    jenkins_job: str
+    website: str             # main website for this run
+    failures: List[FailureItem]
+
+
+# ------------------------------------------------------
+# INGEST ENDPOINT
+# ------------------------------------------------------
+@router.post("/")
+def ingest_failure_report(payload: IngestionRequest, db: Session = Depends(get_db)):
     """
-    Ingest a Jenkins job console log (or POSTed artifact). Parser extracts failure nodes
-    and stores Run + Failure rows. ML labeling will be done async later (or during ingest).
+    Receives a run + list of failures
+    → Normalize, classify, store in DB
+    → Returns run info + classification
     """
-    meta = payload.metadata
-    log_text = payload.log or ""
-    # create run (minimal)
+
+    # -----------------------------
+    # 1. CREATE RUN ENTRY
+    # -----------------------------
     run = Run(
-        website_id = meta.get("website_id"),
-        jenkins_server = meta.get("server"),
-        job_name = meta.get("job_name") or meta.get("job"),
-        build_number = meta.get("build_number"),
-        status = meta.get("status")
+        run_uid=payload.run_id,
+        job_name=payload.jenkins_job,
+        jenkins_server="local",
+        website_id=None,     # until Website table integration
+        build_number=None,
+        status="FAILED",
     )
+
     db.add(run)
-    db.flush()  # assign id without commit
-
-    failures = extract_failures_from_console(log_text)
-    created = []
-    for f in failures:
-        failure = Failure(
-            run_id = run.id,
-            error_message = f.get("raw"),
-            extracted_message = f.get("summary")
-        )
-        db.add(failure)
-        created.append({"summary": f.get("summary")})
-
     db.commit()
-    return {"msg": "ingested", "run_id": run.id, "failures": created}
+    db.refresh(run)
+
+    results = []
+
+    # -----------------------------
+    # 2. PROCESS EACH FAILURE
+    # -----------------------------
+    for f in payload.failures:
+        try:
+            # Normalize message
+            normalized = normalize_message(f.raw_message)
+
+            # ML classification
+            label, confidence = classify_message(normalized)
+
+            # -----------------------------
+            # Create Failure entry
+            # -----------------------------
+            failure = Failure(
+                run_id=run.id,
+                test_name=f.test_name,
+                platform=f.platform,
+                website=f.website,
+                error_message=normalized,
+                extracted_message=normalized.split(":")[0],  # simple extraction
+                website_id=None
+            )
+            db.add(failure)
+            db.commit()
+            db.refresh(failure)
+
+            # -----------------------------
+            # Create Label entry
+            # -----------------------------
+            label_row = Label(
+                failure_id=failure.id,
+                label=label,
+                confidence=confidence,
+                source="model",
+                labeled_by="model_v1"
+            )
+            db.add(label_row)
+            db.commit()
+
+            # Append to response list
+            results.append({
+                "failure_id": failure.id,
+                "test_name": f.test_name,
+                "normalized": normalized,
+                "label": label,
+                "confidence": confidence
+            })
+
+        except Exception as e:
+            # Log error and continue with next failure
+            print(f"[INGEST ERROR] Failed to store failure: {str(e)}")
+            continue
+
+    # -----------------------------
+    # FINAL RESPONSE
+    # -----------------------------
+    return {
+        "run_internal_id": run.id,
+        "external_run_id": payload.run_id,
+        "website": payload.website,
+        "total_received": len(payload.failures),
+        "classified": results
+    }

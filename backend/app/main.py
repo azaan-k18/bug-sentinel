@@ -5,6 +5,7 @@ from app.api.v1.ingestion import router as ingestion_router
 from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.failures import router as failures_router
 from app.api.v1.auth import router as auth_router
+from app.api.v1.review import router as review_router
 
 from app.core.config import settings
 from app.db.base import Base
@@ -28,6 +29,7 @@ app.include_router(ingestion_router, prefix="/api/v1/ingest", tags=["ingest"])
 app.include_router(dashboard_router, prefix="/api/v1/dashboard", tags=["dashboard"])
 app.include_router(failures_router, prefix="/api/v1/failures", tags=["failures"])
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
+app.include_router(review_router, prefix="/api/v1/review", tags=["review"])
 
 @app.on_event("startup")
 def startup_event():
