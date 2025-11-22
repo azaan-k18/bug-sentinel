@@ -9,3 +9,8 @@ xgboost
 scikit-learn
 pandas
 python-jose[cryptography]
+sentence-transformers>=2.2.0
+scikit-learn>=1.1
+numpy
+alembic
+psycopg2

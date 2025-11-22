@@ -77,7 +77,14 @@ export default function Overview() {
           <h2 className="text-xl font-semibold mb-4">Top Recurring Issues</h2>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={topIssues}>
-              <XAxis dataKey="summary" />
+              <XAxis
+                dataKey="summary"
+                interval={0}
+                angle={-45}
+                textAnchor="end"
+                tick={{ fontSize: 12 }}
+                height={90}
+              />
               <YAxis />
               <Tooltip />
               <Bar dataKey="count" fill="#4F46E5" />

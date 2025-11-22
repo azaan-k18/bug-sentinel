@@ -6,6 +6,8 @@ from typing import List
 from app.db.session import get_db
 from app.models.run import Run
 from app.models.failure import Failure
+from app.ml.clusterer import Clusterer
+from app.models.cluster import Cluster
 from app.models.label import Label
 
 from app.parsers.normalize import normalize_message
@@ -87,13 +89,21 @@ def ingest_failure_report(payload: IngestionRequest, db: Session = Depends(get_d
             db.add(label_row)
             db.commit()
 
+            #assign to cluster(online)
+            try:
+                clusterer = Clusterer() #cheap to init; embedder will lazy-load models
+                cluster_id, created_new = clusterer.assign_to_cluster(db, Failure, Cluster, failure, threshold=0.65)
+            except Exception as e:
+                print("[CLUSTER ERROR] Failed to assign cluster:", str(e))
+
             #append to response list
             results.append({
                 "failure_id": failure.id,
                 "test_name": f.test_name,
                 "normalized": normalized,
                 "label": label,
-                "confidence": confidence
+                "confidence": confidence,
+                "cluster_id": cluster_id
             }) #basically, collecting a dictionary for each processed failure to be returned in the final JSON response
 
         except Exception as e:

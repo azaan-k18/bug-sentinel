@@ -6,6 +6,7 @@ from app.api.v1.dashboard import router as dashboard_router
 from app.api.v1.failures import router as failures_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.review import router as review_router
+from app.api.v1.groups import router as group_router
 
 from app.core.config import settings
 from app.db.base import Base
@@ -30,6 +31,7 @@ app.include_router(dashboard_router, prefix="/api/v1/dashboard", tags=["dashboar
 app.include_router(failures_router, prefix="/api/v1/failures", tags=["failures"])
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(review_router, prefix="/api/v1/review", tags=["review"])
+app.include_router(group_router, prefix="/api/v1/groups", tags=["groups"])
 
 @app.on_event("startup")
 def startup_event():
