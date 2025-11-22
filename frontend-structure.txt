@@ -1,0 +1,30 @@
+ ┣ 📂build
+ ┃ ┗ 📜somePreCreatedFiles
+ ┣ node_modules
+ ┃ ┗ someNodeFiles
+ ┣ 📂public
+ ┃ ┗ 📜index.html
+ ┣ 📂src
+ ┃ ┣ 📂api
+ ┃ ┃ ┣ 📜client.js
+ ┃ ┃ ┗ 📜dashboard.js
+ ┃ ┣ 📂components
+ ┃ ┃ ┣ 📜ChartCard.jsx
+ ┃ ┃ ┣ 📜LoadingSpinner.jsx
+ ┃ ┃ ┣ 📜Navbar.jsx
+ ┃ ┃ ┗ 📜Sidebar.jsx
+ ┃ ┣ 📂pages
+ ┃ ┃ ┣ 📜ByWebsite.jsx
+ ┃ ┃ ┣ 📜Flakiness.jsx
+ ┃ ┃ ┣ 📜ModelHealth.jsx
+ ┃ ┃ ┣ 📜Overview.jsx
+ ┃ ┃ ┗ 📜ReviewQueue.jsx
+ ┃ ┣ 📜App.jsx
+ ┃ ┣ 📜index.js
+ ┃ ┗ 📜styles.css
+ ┣ 📜.gitignore
+ ┣ 📜README.md
+ ┣ 📜package-lock.json
+ ┣ 📜package.json
+ ┣ 📜postcss.config.js
+ ┗ 📜tailwind.config.js

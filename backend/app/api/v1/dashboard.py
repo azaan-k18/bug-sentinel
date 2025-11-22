@@ -16,13 +16,18 @@ router = APIRouter()
 @router.get("/overview")
 def overview(db: Session = Depends(get_db)):
     try:
-        total_failures = db.query(Failure).count()
-        total_runs = db.query(Run).count()
+        total_failures = db.query(Failure).count() #returns total rows in failuretable
+        total_runs = db.query(Run).count() #returns total rows in run table
+        #this joins run and failure tables, finds all runs that have atleast one failure and each run is counted only once
         runs_with_failures = db.query(Run).join(Failure, Failure.run_id == Run.id).distinct(Run.id).count()
+        
+        #if run has a failure it is considered a 'fail run', this is pass rate calculation
         pass_rate = 100.0
-        if total_runs > 0:
+        if total_runs > 0: #basically  [runs that passed = total_runs - runs_with_failures][pass_rate = (passed / total_runs) * 100]
             pass_rate = round(((total_runs - runs_with_failures) / total_runs) * 100, 2)
-        # compute percent labeled as real_bug by labels table
+        
+        #compute percent labeled as real_bug by labels table
+        #this is false positive rate calculation, [100% - (real_bug_labels / total_labels * 100)]
         total_labels = db.query(Label).count()
         real_bug_labels = db.query(Label).filter(Label.label == "real_bug").count()
         false_positive_rate = 0.0
@@ -35,7 +40,7 @@ def overview(db: Session = Depends(get_db)):
             "false_positive_rate": false_positive_rate
         }
     except Exception:
-        # fallback dummy response when DB not available
+        #fallback dummy response when DB not available
         return {
             "total_bugs": 123,
             "total_runs": 120,
@@ -49,12 +54,12 @@ def top_issues(limit: int = 10, db: Session = Depends(get_db)):
     Return top recurring extracted_message summaries grouped with counts.
     """
     try:
-        rows = db.query(Failure.extracted_message).all()
-        counts = Counter([r[0] or "unknown" for r in rows])
-        top = counts.most_common(limit)
+        rows = db.query(Failure.extracted_message).all() #this returns a list with every error
+        counts = Counter([r[0] or "unknown" for r in rows]) #from above list we count occurence of each error
+        top = counts.most_common(limit) #stores most common N issues
         return {"top_issues": [{"summary": s, "count": c} for s, c in top]}
     except Exception:
-        # fallback sample data
+        #fallback sample data
         sample = [
             {"summary": "TimeoutException", "count": 23},
             {"summary": "NoSuchElementException", "count": 18},
@@ -68,8 +73,8 @@ def model_health(db: Session = Depends(get_db)):
     Simple model health: number of labeled examples, avg confidence, low-confidence count.
     """
     try:
-        total_labeled = db.query(Label).count()
-        if total_labeled == 0:
+        total_labeled = db.query(Label).count() #querying total labels
+        if total_labeled == 0: #if zero return below response
             return {"total_labeled": 0, "avg_confidence": 0.0, "low_confidence": 0}
         avg_conf = float(db.query(func.avg(Label.confidence)).scalar() or 0.0)
         low_conf = db.query(Label).filter(Label.confidence < 0.65).count()

@@ -17,6 +17,7 @@ class Label(Base):
     source = Column(Text, default="model")
     labeled_by = Column(Text, nullable=True)
     labeled_at = Column(TIMESTAMP, server_default=func.now())
+    notes = Column(Text, nullable=True) #this column will hold the notes added by the user
 
     # reverse relation (IMPORTANT FIX)
     failure = relationship("Failure", back_populates="labels")
