@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+sqlalchemy
+psycopg2-binary
+pydantic<2.0
+python-dotenv
+joblib
+xgboost
+scikit-learn
+pandas
+python-jose[cryptography]
