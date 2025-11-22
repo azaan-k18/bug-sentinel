@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Optional
-from jose import jwt, JWTError
+from jose import jwt
+from jose.exceptions import JWTError
 from app.core.config import settings
 
 def create_access_token(subject: str, expires_delta: Optional[timedelta] = None) -> str:
