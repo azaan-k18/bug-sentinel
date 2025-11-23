@@ -9,3 +9,4 @@ from app.models.label import Label
 from app.models.cluster import Cluster
 from app.models.website import Website
 from app.models.flakiness import Flakiness
+from app.models.trend import ClusterTrend

@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision = 'add_clusters_and_failure_columns'
+revision = '0a857e3f8f5b'
 down_revision = None   # IMPORTANT: If your previous migration exists, set it here.
 branch_labels = None
 depends_on = None

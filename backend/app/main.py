@@ -7,6 +7,8 @@ from app.api.v1.failures import router as failures_router
 from app.api.v1.auth import router as auth_router
 from app.api.v1.review import router as review_router
 from app.api.v1.groups import router as group_router
+from app.api.v1.rca import router as rca_router
+from app.api.v1.trends import router as trends_router
 
 from app.core.config import settings
 from app.db.base import Base
@@ -31,7 +33,9 @@ app.include_router(dashboard_router, prefix="/api/v1/dashboard", tags=["dashboar
 app.include_router(failures_router, prefix="/api/v1/failures", tags=["failures"])
 app.include_router(auth_router, prefix="/api/v1/auth", tags=["auth"])
 app.include_router(review_router, prefix="/api/v1/review", tags=["review"])
-app.include_router(group_router, prefix="/api/v1/groups", tags=["groups"])
+app.include_router(group_router, prefix="/api/v1", tags=["groups"])
+app.include_router(rca_router, prefix="/api/v1", tags=["rca"])
+app.include_router(trends_router, prefix="/api/v1", tags=["trends"])
 
 @app.on_event("startup")
 def startup_event():
